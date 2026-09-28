@@ -295,7 +295,7 @@ function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.
 
 function newForm(tab){
   if(tab==='of-us'||tab==='of-opp') return {style:'HOF', player:'', area:null, zone:null, result:null, toType:null, assist:''};
-  if(tab==='clear'||tab==='ride') return {inout:null, runpass:null, result:null, gb:null, player:'', draw:[], memo:''};
+  if(tab==='clear'||tab==='ride') return {inout:null, runpass:null, result:null, player:'', draw:[], memo:''};
   if(tab==='other') return {cat:db.otherCats[0]||'', player:''};
   return {};
 }
@@ -613,7 +613,6 @@ function clrInput(g){
       <h3>In / Out</h3>${seg('inout',[['In','In'],['Out','Out']],f.inout)}
       <h3>ラン / パス</h3>${seg('runpass',[['ラン','ラン'],['パス','パス']],f.runpass)}
       <h3>結果</h3><div class="seg">${Object.entries(CLR).map(([k,r])=>`<button class="btn big ${f.result===k?'on '+r.c:''}" data-a="set" data-k="result" data-v="${k}">${r.l}</button>`).join('')}</div>
-      <h3>GB</h3>${seg('gb',[['o','○'],['x','×']],f.gb)}
       <h3>メモ</h3><input class="full" data-in="form:memo" value="${esc(f.memo)}" placeholder="任意">
       <p class="mut sm">※ 各項目の意味は確認中のため、紙の列に合わせた仮の形です</p>
     </div>
@@ -631,9 +630,9 @@ function clrLog(evs){
   const s=clrStats(evs);
   return `<section class="card"><div class="loghead"><h2>記録（${evs.length}件）</h2><div class="kpis">
     ${kpi('成功',`${s.ok}/${s.n}`,pct(s.ok,s.n))}${kpi('△',s.tri)}${kpi('失敗',s.ng)}${['In','Out','ラン','パス'].map(k=>s.by[k]?kpi(k,`${s.by[k].ok}/${s.by[k].n}`):'').join('')}</div></div>
-  ${evs.length?`<div class="tblw"><table class="tbl"><thead><tr><th>#</th><th>Q</th><th>In/Out</th><th>ラン/パス</th><th>結果</th><th>GB</th><th class="l">選手</th><th>図</th><th class="l">メモ</th><th></th></tr></thead><tbody>
+  ${evs.length?`<div class="tblw"><table class="tbl"><thead><tr><th>#</th><th>Q</th><th>In/Out</th><th>ラン/パス</th><th>結果</th><th class="l">選手</th><th>図</th><th class="l">メモ</th><th></th></tr></thead><tbody>
   ${evs.map((e,i)=>[e,i]).reverse().map(([e,i])=>`<tr class="${ui.editingId===e.id?'hl':''}"><td>${i+1}</td><td>${e.q}</td><td>${e.inout||'-'}</td><td>${e.runpass||'-'}</td>
-    <td>${e.result?`<span class="tag ${CLR[e.result].c}">${CLR[e.result].l}</span>`:'-'}</td><td>${e.gb==='o'?'○':e.gb==='x'?'×':'-'}</td>
+    <td>${e.result?`<span class="tag ${CLR[e.result].c}">${CLR[e.result].l}</span>`:'-'}</td>
     <td class="l">${e.player?'#'+esc(e.player)+' '+esc(pname(e.player)):'-'}</td><td>${e.draw&&e.draw.length?'あり':'-'}</td><td class="l">${esc(e.memo||'')}</td>
     <td class="ops"><button class="btn sm" data-a="editEv" data-v="${e.id}">修正</button><button class="btn sm ghost danger" data-a="delEv" data-v="${e.id}">削除</button></td></tr>`).join('')}
   </tbody></table></div>`:'<p class="mut">まだ記録がありません</p>'}</section>`;
@@ -778,7 +777,7 @@ const A={
   },
   saveClr:()=>{
     const f=ui.form; if(!f.result){ toast('結果を選んでください'); return; }
-    commit({type:'clr',kind:ui.tab,inout:f.inout,runpass:f.runpass,result:f.result,gb:f.gb,player:f.player||'',draw:f.draw,memo:f.memo||''});
+    commit({type:'clr',kind:ui.tab,inout:f.inout,runpass:f.runpass,result:f.result,player:f.player||'',draw:f.draw,memo:f.memo||''});
   },
   tool:v=>{ ui.tool=v; render(); },
   undoDraw:()=>{ ui.form.draw.pop(); const cv=document.getElementById('drawcv'); if(cv) paint(cv,ui.form.draw); },
@@ -791,7 +790,7 @@ const A={
   editEv:v=>{
     const e=G().events.find(x=>x.id===v); if(!e) return;
     if(e.type==='off'){ ui.tab=e.team==='us'?'of-us':'of-opp'; ui.form={style:e.style,player:e.player||'',area:e.area,zone:e.zone,result:e.result,toType:e.toType,assist:e.assist||''}; }
-    else if(e.type==='clr'){ ui.tab=e.kind; ui.form={inout:e.inout,runpass:e.runpass,result:e.result,gb:e.gb,player:e.player||'',draw:JSON.parse(JSON.stringify(e.draw||[])),memo:e.memo||''}; }
+    else if(e.type==='clr'){ ui.tab=e.kind; ui.form={inout:e.inout,runpass:e.runpass,result:e.result,player:e.player||'',draw:JSON.parse(JSON.stringify(e.draw||[])),memo:e.memo||''}; }
     ui.editingId=v; window.scrollTo(0,0); render();
   },
   delEv:async v=>{
@@ -823,13 +822,13 @@ const A={
   export:()=>download(`lacrosse-stats-${today()}.json`,JSON.stringify(db,null,1),'application/json'),
   import:()=>document.getElementById('impf').click(),
   csv:()=>{
-    const head=['日付','相手','Q','種別','チーム','FFO/HOF','選手','結果','TO種類','エリア','コース','アシスト','In/Out','ラン/パス','GB','項目','○×','メモ'];
+    const head=['日付','相手','Q','種別','チーム','FFO/HOF','選手','結果','TO種類','エリア','コース','アシスト','In/Out','ラン/パス','項目','○×','メモ'];
     const q=v=>{ const s=String(v??''); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
     const lines=[head.join(',')];
     for(const g of sortedGames(true)) for(const e of g.events){
-      const r={off:['オフェンス',e.team==='us'?db.teamName:g.opp,e.style,e.player,e.result&&RES[e.result]?RES[e.result].l:'',e.toType,e.area,e.zone,e.assist,'','','','',''],
-        clr:[e.kind==='clear'?'クリア':'ライド','','',e.player,e.result&&CLR[e.result]?CLR[e.result].l:'','','','','',e.inout,e.runpass,e.gb==='o'?'○':e.gb==='x'?'×':'','',''],
-        oth:['その他','','',e.player,'','','','','','','','',e.cat,e.ok?'○':'×']}[e.type];
+      const r={off:['オフェンス',e.team==='us'?db.teamName:g.opp,e.style,e.player,e.result&&RES[e.result]?RES[e.result].l:'',e.toType,e.area,e.zone,e.assist,'','','',''],
+        clr:[e.kind==='clear'?'クリア':'ライド','','',e.player,e.result&&CLR[e.result]?CLR[e.result].l:'','','','','',e.inout,e.runpass,'',''],
+        oth:['その他','','',e.player,'','','','','','','',e.cat,e.ok?'○':'×']}[e.type];
       if(r) lines.push([g.date,g.opp,e.q,...r,e.memo||''].map(q).join(','));
     }
     download(`lacrosse-stats-${today()}.csv`,'﻿'+lines.join('\r\n'),'text/csv');
