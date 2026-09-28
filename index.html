@@ -581,13 +581,13 @@ function offInput(g){
   const shot=['goal','save','miss'].includes(f.result), onGoal=f.result==='goal'||f.result==='save';
   const evs=g.events.filter(e=>e.type==='off'&&e.team===team);
   return `<section class="card inp">
-    <div class="col">${ui.editingId?editingBanner():''}
+    <div class="col">${ui.editingId?editingBanner():''}<h3>${f.result==='to'?'TOした選手（任意）':'シュート者'} ${pickLabel(team)}</h3>${picker(team,g)}</div>
+    <div class="col">
       <h3>攻撃の種類</h3>${seg('style',[['FFO','FFO（速攻）'],['HOF','HOF（セット）']],f.style,'big')}
       <h3>結果</h3><div class="seg">${Object.entries(RES).map(([k,r])=>`<button class="btn big ${f.result===k?'on '+r.c:''}" data-a="set" data-k="result" data-v="${k}">${r.l}</button>`).join('')}</div>
       ${f.result==='to'?`<h3>TOの種類</h3>${seg('toType',db.toTypes.map(t=>[t.code,t.code]),f.toType)}`:''}
       ${f.result==='goal'&&team==='us'?`<h3>アシスト（任意）</h3><select class="full" data-in="assist"><option value="">なし</option>${db.players.slice().sort(byNo).map(p=>`<option value="${esc(p.no)}" ${String(p.no)===f.assist?'selected':''}>#${esc(p.no)} ${esc(p.name)}</option>`).join('')}</select>`:''}
     </div>
-    <div class="col"><h3>${f.result==='to'?'TOした選手（任意）':'シュート者'} ${pickLabel(team)}</h3>${picker(team,g)}</div>
     <div class="col c3">
       <h3>シュートエリア ${shot||!f.result?'':'<span class="sm">（シュート時のみ）</span>'}</h3>${areaSVG({sel:f.area,dis:f.result&&!shot})}
       <h3>ゴールコース ${onGoal||!f.result?'':'<span class="sm">（枠内のときのみ）</span>'}</h3>${goalSVG({sel:f.zone,dis:f.result&&!onGoal})}
